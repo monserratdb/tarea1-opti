@@ -2,46 +2,53 @@ import gurobipy as gp
 from gurobipy import GRB
 import csv
 
+# Función para leer los archivos CSV
 def read_csv(file_path):
     data = []
-    with open(file_path, 'r') as file:
-        reader = csv.reader(file)
+    with open(file_path, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # saltar encabezado
         for row in reader:
-            data.append(row)
+            data.append([float(val) for val in row])
     return data
 
+# Nombre de los archivos CSV
+costos_file = 'costos.csv'
+limites_file = 'limites.csv'
+contenidos_file = 'contenidos_nutricionales.csv'
 
-    # Lectura de los archivos CSV
-costos = read_csv('costos.csv')
-limites = read_csv('limites.csv')
-contenidos = read_csv('contenidos_nutricionales.csv')
+# Leer los datos de los archivos CSV
+costos = read_csv(costos_file)
+limites = read_csv(limites_file)
+contenidos = read_csv(contenidos_file)
 
-    # Creación del modelo
-model = gp.Model("Optimizacion_Alimentacion")
+# Crear el modelo
+model = gp.Model("Gallos")
 
-    # Variables
-cereales = range(1, len(costos))
-x = model.addVars(cereales, name="x")
+# Variables
+num_cereales = len(costos)
+x = model.addVars(num_cereales, name="x")
 
-    # Restricciones
-for i in range(1, len(limites)):
-    limite_inferior = float(limites[i][0])
-    limite_superior = float(limites[i][1])
-    model.addConstr(sum(float(contenidos[j][i-1]) * x[j] for j in cereales) >= limite_inferior, f"Limite_inferior_{i}")
-    model.addConstr(sum(float(contenidos[j][i-1]) * x[j] for j in cereales) <= limite_superior, f"Limite_superior_{i}")
+# Restricciones
+for i in range(len(limites)):
+    model.addConstr(gp.quicksum(contenidos[j][i] * x[j] for j in range(num_cereales)) >= limites[i][0])
+    model.addConstr(gp.quicksum(contenidos[j][i] * x[j] for j in range(num_cereales)) <= limites[i][1])
 
-    # Restricción de que la mezcla esté compuesta únicamente por cereales
-model.addConstr(sum(x[j] for j in cereales) == 1, "Mezcla_compuesta_por_cereales")
+# Función Objetivo
+model.setObjective(gp.quicksum(costos[j][0] * x[j] for j in range(num_cereales)), GRB.MINIMIZE)
 
-    # Función Objetivo
-model.setObjective(sum(float(costos[j][0]) * x[j] for j in cereales), GRB.MINIMIZE)
-
-    # Optimización
+# Resolver el modelo
 model.optimize()
 
-    # Impresión de resultados
+# Imprimir resultados
 if model.status == GRB.OPTIMAL:
-    print("Valor óptimo:", model.objVal)
-    print("Proporciones óptimas de cereales:")
-    for cereal in cereales:
-        print(f"Cereal {cereal}: {x[cereal].x}")
+    print(f"Valor óptimo: {model.objVal} CLP/kg")
+
+    print("Proporciones óptimas:")
+    for j in range(num_cereales):
+        print(f"Cereal {j+1}: {x[j].X}")
+
+    model.write("output.lp")
+else:
+    print("No se encontró una solución óptima")
+
