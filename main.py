@@ -19,20 +19,30 @@ contenidos_file = 'contenidos_nutricionales.csv'
 
 # Leer los datos de los archivos CSV
 costos = read_csv(costos_file)
+print(costos)
 limites = read_csv(limites_file)
+print(limites)
 contenidos = read_csv(contenidos_file)
+print(contenidos)
 
+J = range(len(costos))
+I = range(len(limites))
+
+print(f"J: {list(J)}")
+print(f"I: {list(I)}")
 # Crear el modelo
 model = gp.Model("Gallos")
 
 # Variables
 num_cereales = len(costos)
-x = model.addVars(num_cereales, name="x")
+x = model.addVars(num_cereales, name="x", lb=0.0)
 
 # Restricciones
 for i in range(len(limites)):
-    model.addConstr(gp.quicksum(contenidos[j][i] * x[j] for j in range(num_cereales)) >= limites[i][0])
-    model.addConstr(gp.quicksum(contenidos[j][i] * x[j] for j in range(num_cereales)) <= limites[i][1])
+    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(num_cereales)) >= limites[i][0])
+    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(num_cereales)) <= limites[i][1])
+
+model.addConstr(gp.quicksum(x[j] for j in range(num_cereales)) == 1)
 
 # Función Objetivo
 model.setObjective(gp.quicksum(costos[j][0] * x[j] for j in range(num_cereales)), GRB.MINIMIZE)
@@ -48,7 +58,6 @@ if model.status == GRB.OPTIMAL:
     for j in range(num_cereales):
         print(f"Cereal {j+1}: {x[j].X}")
 
-    model.write("output.lp")
 else:
     print("No se encontró una solución óptima")
 
