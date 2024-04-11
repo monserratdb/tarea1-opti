@@ -35,6 +35,7 @@ model = gp.Model("Gallos")
 
 # Variables
 num_cereales = len(costos)
+# naturaleza de variables con lb
 x = model.addVars(num_cereales, name="x", lb=0.0)
 
 # Restricciones
@@ -42,6 +43,7 @@ for i in range(len(limites)):
     model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(num_cereales)) >= limites[i][0])
     model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(num_cereales)) <= limites[i][1])
 
+# Restricción de que la suma de todas las proporciones de cereales sea igual a 1
 model.addConstr(gp.quicksum(x[j] for j in range(num_cereales)) == 1)
 
 # Función Objetivo
