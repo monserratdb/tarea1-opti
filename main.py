@@ -19,46 +19,42 @@ contenidos_file = 'contenidos_nutricionales.csv'
 
 # Leer los datos de los archivos CSV
 costos = read_csv(costos_file)
-print(costos)
 limites = read_csv(limites_file)
-print(limites)
 contenidos = read_csv(contenidos_file)
-print(contenidos)
 
-J = range(len(costos))
-I = range(len(limites))
+# Conjuntos J e I
+J = len(costos)
+I = len(limites)
 
-print(f"J: {list(J)}")
-print(f"I: {list(I)}")
-# Crear el modelo
+# Crear el modelo con gurobi
 model = gp.Model("Gallos")
 
-# Variables
-num_cereales = len(costos)
-# naturaleza de variables con lb
-x = model.addVars(num_cereales, name="x", lb=0.0)
+# Variable y naturaleza de variables con lb
+x = model.addVars(J, name="x", lb=0.0)
 
 # Restricciones
-for i in range(len(limites)):
-    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(num_cereales)) >= limites[i][0])
-    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(num_cereales)) <= limites[i][1])
+for i in range(I):
+    # Proporción mínima de nutrientes
+    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(J)) >= limites[i][0])
+    #Proporción máxima de nutrientes
+    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(J)) <= limites[i][1])
 
 # Restricción de que la suma de todas las proporciones de cereales sea igual a 1
-model.addConstr(gp.quicksum(x[j] for j in range(num_cereales)) == 1)
+model.addConstr(gp.quicksum(x[j] for j in range(J)) == 1)
 
 # Función Objetivo
-model.setObjective(gp.quicksum(costos[j][0] * x[j] for j in range(num_cereales)), GRB.MINIMIZE)
+model.setObjective(gp.quicksum(costos[j][0] * x[j] for j in range(J)), GRB.MINIMIZE)
 
 # Resolver el modelo
 model.optimize()
 
-# Imprimir resultados
+# Imprimir resultados si encuentra solución
 if model.status == GRB.OPTIMAL:
     print(f"Valor óptimo: {model.objVal} CLP/kg")
 
     print("Proporciones óptimas:")
-    for j in range(num_cereales):
-        print(f"Cereal {j+1}: {x[j].X}")
+    for j in range(J):
+        print(f"Cereal {j+1}: {round(x[j].X, 3)}")
 
 else:
     print("No se encontró una solución óptima")
