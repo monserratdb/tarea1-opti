@@ -13,14 +13,14 @@ def read_csv(file_path):
     return data
 
 # Nombre de los archivos CSV
-costos_file = 'costos.csv'
-limites_file = 'limites.csv'
-contenidos_file = 'contenidos_nutricionales.csv'
+archivo_costos = 'costos.csv'
+archivo_limites = 'limites.csv'
+archivo_contenidos = 'contenidos_nutricionales.csv'
 
 # Leer los datos de los archivos CSV
 costos = read_csv(costos_file)
 limites = read_csv(limites_file)
-contenidos = read_csv(contenidos_file)
+a = read_csv(contenidos_file) # Usamos a para que fuera como el enunciado
 
 # Conjuntos J e I
 J = len(costos)
@@ -35,9 +35,9 @@ x = model.addVars(J, name="x", lb=0.0)
 # Restricciones
 for i in range(I):
     # Proporción mínima de nutrientes
-    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(J)) >= limites[i][0])
+    model.addConstr(gp.quicksum(a[i][j] * x[j] for j in range(J)) >= limites[i][0])
     #Proporción máxima de nutrientes
-    model.addConstr(gp.quicksum(contenidos[i][j] * x[j] for j in range(J)) <= limites[i][1])
+    model.addConstr(gp.quicksum(a[i][j] * x[j] for j in range(J)) <= limites[i][1])
 
 # Restricción de que la suma de todas las proporciones de cereales sea igual a 1
 model.addConstr(gp.quicksum(x[j] for j in range(J)) == 1)
