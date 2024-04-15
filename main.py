@@ -18,9 +18,9 @@ archivo_limites = 'limites.csv'
 archivo_contenidos = 'contenidos_nutricionales.csv'
 
 # Leer los datos de los archivos CSV
-costos = read_csv(costos_file)
-limites = read_csv(limites_file)
-a = read_csv(contenidos_file) # Usamos a para que fuera como el enunciado
+costos = read_csv(archivo_costos)
+limites = read_csv(archivo_limites)
+a = read_csv(archivo_contenidos) # Usamos a para que fuera como el enunciado
 
 # Conjuntos J e I
 J = len(costos)
@@ -54,6 +54,7 @@ if model.status == GRB.OPTIMAL:
 
     print("Proporciones óptimas:")
     for j in range(J):
+        # Round para aproximar los resultados a la milésima
         print(f"Cereal {j+1}: {round(x[j].X, 3)}")
 
 else:
